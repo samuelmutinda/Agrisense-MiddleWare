@@ -1,0 +1,86 @@
+{
+  "scope": "Only permissions, features, and actions supported by Agrisense Middleware REST APIs and WebSocket. RBAC is client-side; middleware has no role enforcement.",
+  "middlewareCapabilities": {
+    "rest": [
+      "arrivals: create, list, get by id",
+      "transfers: initiate, cancel, complete; list, get by id",
+      "collections: record; list, get by id",
+      "losses: record (transfer / storage); list, get by id",
+      "spoilages: record; list, get by id",
+      "inventory: current, summary (tenant-scoped)",
+      "crops: CRUD (global)",
+      "customers: CRUD (tenant-scoped)"
+    ],
+    "realtime": "WebSocket: arrival, transfer, spoilage, loss, collection events"
+  },
+  "roles": {
+    "cultivator": {
+      "canonicalRole": "cultivator",
+      "displayName": "CULTIVATOR",
+      "description": "Post-harvest and farmer workflows: crop management, storage tracking, consignment visibility, basic inventory view.",
+      "permissions": [
+        "view_own_data",
+        "track_consignment",
+        "access_basic_analytics",
+        "receive_realtime_events"
+      ],
+      "features": [
+        "Crop Tracking",
+        "Storage Monitoring",
+        "Basic Analytics",
+        "Real-time Alerts"
+      ],
+      "exampleActions": [
+        "View own arrivals, transfers, collections, losses, spoilages",
+        "View inventory (current and summary)",
+        "Record arrival; initiate / cancel / complete transfer",
+        "Record collection, spoilage, transfer loss, storage loss",
+        "Manage crops and customers",
+        "Receive WebSocket alerts for arrivals, transfers, spoilage, loss, collection"
+      ],
+      "notes": "Billing, support tiers, rate limits are out of scope for middleware. AI recommendations are client-side."
+    },
+    "read_only": {
+      "canonicalRole": "read_only",
+      "displayName": "READ ONLY",
+      "description": "View-only access for auditors or reviewers; no create/update/delete.",
+      "permissions": [
+        "view_only_access",
+        "no_modifications"
+      ],
+      "features": [
+        "Data Viewing",
+        "Report-style Access (inventory current/summary)"
+      ],
+      "exampleActions": [
+        "View arrivals, transfers, collections, losses, spoilages, inventory, crops, customers",
+        "Optionally subscribe to WebSocket for read-only real-time updates"
+      ],
+      "notes": "Read-only is enforced client-side; middleware does not restrict to GET."
+    },
+    "customer": {
+      "canonicalRole": "customer",
+      "displayName": "CUSTOMER",
+      "description": "Optional limited-access role. Token includes customer_ids; WebSocket can filter by customer_id. REST APIs are not yet customer-scoped.",
+      "permissions": [
+        "view_own_data"
+      ],
+      "features": [
+        "Data Viewing (customer-scoped when middleware supports it)"
+      ],
+      "exampleActions": [
+        "View own consignments/batches when client applies customer-based filtering"
+      ],
+      "notes": "Optional. Keep only if client will use customer_ids or middleware adds customer-scoped APIs."
+    }
+  },
+  "rolesDropped": {
+    "operator": "Device control, maintenance logs. Real-time monitoring overlaps cultivator.",
+    "manager": "Team management, financial views, predictive reports, advanced reporting not in middleware.",
+    "admin": "User management, system configuration, API access, full system access not in middleware."
+  },
+  "recommendation": {
+    "suggestedCanonicalSet": ["cultivator", "read_only", "customer (optional)"],
+    "rationale": "Middleware supports only cultivator-style data and workflows plus view-only (client-enforced). Customer is optional until customer-scoped support exists."
+  }
+}
