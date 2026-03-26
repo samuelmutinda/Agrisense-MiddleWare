@@ -28,7 +28,7 @@ class StaffOperation(Base):
     supervisor_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     performance_notes = Column(Text, nullable=True)
     productivity_score = Column(Float, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(timezone.utc))
     

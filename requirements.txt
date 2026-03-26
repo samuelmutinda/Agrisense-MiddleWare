@@ -30,6 +30,7 @@ idna==3.11
 makefun==1.16.0
 proto-plus==1.27.0
 protobuf==6.33.2
+passlib[bcrypt]>=1.7.4
 pwdlib==0.3.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
@@ -49,3 +50,12 @@ typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.2
 uvicorn==0.40.0
+# InfluxDB for time-series telemetry
+influxdb-client>=1.36.0
+# Notification providers
+sendgrid>=6.10.0
+twilio>=8.10.0
+africastalking>=1.2.5
+firebase-admin>=6.2.0
+# Google Maps API
+googlemaps>=4.10.0

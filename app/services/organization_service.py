@@ -28,7 +28,7 @@ async def create_organization(
         phone=data.phone,
         address=data.address.model_dump() if data.address else None,
         parent_organization_id=data.parent_organization_id,
-        metadata=data.metadata,
+        extra_metadata=data.metadata,
         status="pending_verification"
     )
     session.add(org)

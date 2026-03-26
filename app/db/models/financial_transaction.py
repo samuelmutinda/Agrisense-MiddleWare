@@ -44,7 +44,7 @@ class FinancialTransaction(Base):
     reference_number = Column(String(100), nullable=True)
     description = Column(Text, nullable=True)
     processed_by_user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     
     # Relationships

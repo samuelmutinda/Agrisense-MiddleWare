@@ -33,7 +33,7 @@ async def create_financial_transaction(
         reference_number=data.reference_number,
         description=data.description,
         processed_by_user_id=auth.user_id,
-        metadata=data.metadata,
+        extra_metadata=data.metadata,
         status="completed"
     )
     session.add(tx)

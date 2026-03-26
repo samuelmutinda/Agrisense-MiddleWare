@@ -26,7 +26,7 @@ async def create_regulatory_compliance(session: AsyncSession, data: reg_schema.R
         expiry_date=data.expiry_date,
         requirements=data.requirements,
         notes=data.notes,
-        metadata=data.metadata,
+        extra_metadata=data.metadata,
         status="pending_review"
     )
     session.add(record)

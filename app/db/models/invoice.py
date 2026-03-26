@@ -34,7 +34,7 @@ class Invoice(Base):
     paid_date = Column(Date, nullable=True)
     line_items = Column(JSONB, nullable=True)
     notes = Column(Text, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     

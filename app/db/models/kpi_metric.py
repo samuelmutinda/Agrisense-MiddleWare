@@ -24,7 +24,7 @@ class KpiMetric(Base):
     period_start = Column(Date, nullable=False)
     period_end = Column(Date, nullable=False)
     facility_id = Column(UUID(as_uuid=True), ForeignKey("cold_storage_units.id"), nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     
     tenant = relationship("Tenant", back_populates="kpi_metrics")

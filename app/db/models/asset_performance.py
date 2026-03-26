@@ -27,7 +27,7 @@ class AssetPerformance(Base):
     operating_hours = Column(Float, nullable=True)
     error_count = Column(Integer, nullable=False, default=0)
     last_maintenance = Column(DateTime(timezone=True), nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     
     tenant = relationship("Tenant", back_populates="asset_performance_records")

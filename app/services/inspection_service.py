@@ -31,7 +31,7 @@ async def create_inspection(
         scheduled_date=data.scheduled_date,
         criteria=[c.model_dump() for c in data.criteria] if data.criteria else None,
         notes=data.notes,
-        metadata=data.metadata,
+        extra_metadata=data.metadata,
         result="pending"
     )
     session.add(inspection)

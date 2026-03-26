@@ -27,7 +27,7 @@ class EnergyConsumption(Base):
     cost_per_kwh = Column(Float, nullable=True)
     total_cost = Column(Float, nullable=True)
     carbon_footprint_kg = Column(Float, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     
     tenant = relationship("Tenant", back_populates="energy_consumption_records")

@@ -304,3 +304,82 @@ Run from the project root, e.g. `python scripts/create_admin_user.py`.
 3. **App:** `pip install -r requirements.txt`, configure `.env` (see table above), run `python main.py`.
 4. **Docs:** Open **http://localhost:9000/docs** (Swagger) or **http://localhost:9000/redoc** (ReDoc).
 5. **Sysadmin:** Set `SYSADMIN_EMAIL` and `SYSADMIN_PASSWORD` in `.env` for automatic creation on startup, or use `scripts/create_admin_user.py` once.
+
+---
+
+## 7. InfluxDB + Grafana (Time-Series & Digital Twin)
+
+The middleware docker-compose now includes **InfluxDB 2.7** and **Grafana 10.4** for:
+- **Telemetry persistence:** sensor readings from ChirpStack/LoRaWAN devices
+- **Digital twin analytics:** pre-computed physics simulation data from the ML backend
+
+### Quick start
+
+```bash
+# 1. Configure InfluxDB credentials in .env (or use .env.docker defaults)
+#    INFLUXDB_URL, INFLUXDB_TOKEN, INFLUXDB_ORG, INFLUXDB_ENABLED=true
+
+# 2. Spin up the full stack (includes InfluxDB + Grafana)
+docker compose up -d
+
+# 3. Verify InfluxDB
+open http://localhost:8086   # Login: agrisense_admin / <INFLUXDB_TOKEN>
+
+# 4. Verify Grafana
+open http://localhost:3000   # Login: admin / agrisense (or GRAFANA_ADMIN_PASSWORD)
+
+# 5. Ingest digital twin dataset
+pip install influxdb-client pandas python-dotenv
+python scripts/ingest_digital_twin.py --csv /path/to/digital_twin_balanced_20000_seed42.csv
+```
+
+### InfluxDB buckets
+
+| Bucket | Purpose |
+|--------|---------|
+| `telemetry-raw` | Live sensor readings (ChirpStack webhook + REST ingest) |
+| `telemetry-downsampled-1h` | Hourly aggregates for analytics |
+| `kpi-metrics` | Business KPI time-series |
+| `digital_twin` | Physics-driven simulation data (cold_chain measurement) |
+
+### Digital Twin API endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/digital-twin/crops/summary` | Mean temp, humidity, quality, RSL per crop |
+| GET | `/api/digital-twin/crops/{crop_type}/sensors` | Time-series for any sensor field |
+| GET | `/api/digital-twin/crops/{crop_type}/decay` | Decay sub-model breakdown |
+| GET | `/api/digital-twin/spoilage` | Spoiled count per crop type |
+| GET | `/api/digital-twin/mold-risk` | Recent high-mold-risk events |
+| GET | `/api/digital-twin/energy` | Energy consumption per crop |
+| GET | `/api/digital-twin/quality-distribution` | Quality status distribution |
+
+### Grafana dashboards
+
+Auto-provisioned on first boot:
+- **InfluxDB - AgriSense** datasource → `telemetry-raw` bucket
+- **InfluxDB - Digital Twin** datasource → `digital_twin` bucket
+- **Cold Chain Digital Twin** dashboard with 7 panels
+
+### Environment variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `INFLUXDB_URL` | `http://localhost:8086` | InfluxDB server URL |
+| `INFLUXDB_TOKEN` | *(required)* | API token for InfluxDB |
+| `INFLUXDB_ORG` | `agrisense` | Organization name |
+| `INFLUXDB_BUCKET_RAW` | `telemetry-raw` | Live telemetry bucket |
+| `INFLUXDB_BUCKET_DOWNSAMPLED` | `telemetry-downsampled-1h` | Downsampled bucket |
+| `INFLUXDB_BUCKET_KPI` | `kpi-metrics` | KPI metrics bucket |
+| `INFLUXDB_BUCKET_DIGITAL_TWIN` | `digital_twin` | Physics simulation bucket |
+| `INFLUXDB_ENABLED` | `false` | Set to `true` to enable telemetry writes |
+| `GRAFANA_ADMIN_USER` | `admin` | Grafana login username |
+| `GRAFANA_ADMIN_PASSWORD` | *(required)* | Grafana login password |
+| `GRAFANA_PORT` | `3000` | Grafana host port |
+| `CSV_PATH` | `digital_twin_balanced_20000_seed42.csv` | Path to digital twin CSV |
+
+### Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `scripts/ingest_digital_twin.py` | Ingest digital twin CSV → InfluxDB `digital_twin` bucket |

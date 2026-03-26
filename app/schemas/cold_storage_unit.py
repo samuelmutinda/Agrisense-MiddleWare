@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import uuid
+from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel, Field
 
@@ -22,3 +24,23 @@ class ColdStorageUnitResponse(BaseModel):
     is_active: bool
 
     model_config = {"from_attributes": True}
+
+
+class FacilitySupervisorAssignmentCreate(BaseModel):
+    supervisor_id: uuid.UUID
+    notes: Optional[str] = Field(default=None, max_length=500)
+
+
+class FacilitySupervisorAssignmentResponse(BaseModel):
+    assignment_id: uuid.UUID
+    facility_id: uuid.UUID
+    supervisor_id: uuid.UUID
+    supervisor_name: str
+    assigned_at: datetime
+    assigned_by: Optional[uuid.UUID] = None
+    notes: Optional[str] = None
+
+
+class FacilitySupervisorAssignmentListResponse(BaseModel):
+    items: list[FacilitySupervisorAssignmentResponse]
+    total: int

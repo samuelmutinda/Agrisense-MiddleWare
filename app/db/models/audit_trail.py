@@ -25,7 +25,7 @@ class AuditTrail(Base):
     ip_address = Column(String(45), nullable=True)
     user_agent = Column(String(500), nullable=True)
     timestamp = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc), index=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     
     tenant = relationship("Tenant", back_populates="audit_trails")
     user = relationship("User", back_populates="audit_trails")

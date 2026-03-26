@@ -1,0 +1,107 @@
+{
+  "uid": "agrisense-cold-chain",
+  "title": "AgriSense — Cold Chain Digital Twin",
+  "tags": ["agrisense", "cold-chain", "digital-twin"],
+  "timezone": "browser",
+  "editable": true,
+  "time": { "from": "now-24h", "to": "now" },
+  "refresh": "30s",
+  "panels": [
+    {
+      "id": 1,
+      "title": "Mean Temperature per Crop (last 24 h)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "influxdb", "uid": "" },
+      "targets": [
+        {
+          "query": "from(bucket: \"digital_twin\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cold_chain\")\n  |> filter(fn: (r) => r._field == \"temperature\")\n  |> group(columns: [\"crop_type\"])\n  |> aggregateWindow(every: 15m, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Quality Index per Crop (last 24 h)",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "influxdb", "uid": "" },
+      "targets": [
+        {
+          "query": "from(bucket: \"digital_twin\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cold_chain\")\n  |> filter(fn: (r) => r._field == \"quality_index\")\n  |> group(columns: [\"crop_type\"])\n  |> aggregateWindow(every: 15m, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "RSL % per Crop (last 24 h)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "influxdb", "uid": "" },
+      "fieldConfig": {
+        "defaults": { "min": 0, "max": 100, "unit": "percent" },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "query": "from(bucket: \"digital_twin\")\n  |> range(start: -24h)\n  |> filter(fn: (r) => r._measurement == \"cold_chain\")\n  |> filter(fn: (r) => r._field == \"rsl_percent\")\n  |> group(columns: [\"crop_type\"])\n  |> mean()",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Spoilage Events by Crop (last 30 d)",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "influxdb", "uid": "" },
+      "targets": [
+        {
+          "query": "from(bucket: \"digital_twin\")\n  |> range(start: -30d)\n  |> filter(fn: (r) => r._measurement == \"cold_chain\" and r.is_spoiled == \"true\")\n  |> filter(fn: (r) => r._field == \"temperature\")\n  |> group(columns: [\"crop_type\"])\n  |> count()",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "High Mold Risk Events (score > 0.7, last 7 d)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "influxdb", "uid": "" },
+      "targets": [
+        {
+          "query": "from(bucket: \"digital_twin\")\n  |> range(start: -7d)\n  |> filter(fn: (r) => r._measurement == \"cold_chain\")\n  |> filter(fn: (r) => r._field == \"mold_risk_score\")\n  |> filter(fn: (r) => r._value > 0.7)\n  |> sort(columns: [\"_time\"], desc: true)\n  |> limit(n: 50)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Energy Consumption (kWh) per Crop",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+      "datasource": { "type": "influxdb", "uid": "" },
+      "targets": [
+        {
+          "query": "from(bucket: \"digital_twin\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cold_chain\")\n  |> filter(fn: (r) => r._field == \"energy_consumed_kwh\")\n  |> group(columns: [\"crop_type\"])\n  |> aggregateWindow(every: 1h, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "title": "Decay Sub-Models — FLU Total per Crop",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+      "datasource": { "type": "influxdb", "uid": "" },
+      "targets": [
+        {
+          "query": "from(bucket: \"digital_twin\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r._measurement == \"cold_chain\")\n  |> filter(fn: (r) => r._field == \"flu_total\")\n  |> group(columns: [\"crop_type\"])\n  |> aggregateWindow(every: 15m, fn: mean, createEmpty: false)",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39
+}

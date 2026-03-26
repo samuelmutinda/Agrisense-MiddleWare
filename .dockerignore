@@ -1,0 +1,35 @@
+# Docker
+postgres_data/
+redis_data/
+mosquitto_data/
+mosquitto_log/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Environment
+.env
+.env.docker
+*.Zone.Identifier
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+docs/
+*.md
+LICENSE

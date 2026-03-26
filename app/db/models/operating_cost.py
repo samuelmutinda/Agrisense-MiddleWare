@@ -26,7 +26,7 @@ class OperatingCost(Base):
     vendor_name = Column(String(100), nullable=True)
     invoice_reference = Column(String(50), nullable=True)
     is_recurring = Column(Boolean, nullable=False, default=False)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     
     tenant = relationship("Tenant", back_populates="operating_costs")

@@ -1,0 +1,176 @@
+services:
+  # ─── PostgreSQL ────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: agrisense
+      POSTGRES_PASSWORD: agrisense
+      POSTGRES_DB: agrisense
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/initdb:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agrisense"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── Redis (required by ChirpStack) ───────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── Mosquitto MQTT Broker (ChirpStack gateway bridge) ────────────────
+  mosquitto:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "1883:1883"    # MQTT
+      - "1884:1884"    # WebSocket MQTT
+    volumes:
+      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -i healthcheck -W 3 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ─── ChirpStack Gateway Bridge ────────────────────────────────────────
+  chirpstack-gateway-bridge:
+    image: chirpstack/chirpstack-gateway-bridge:4
+    restart: unless-stopped
+    ports:
+      - "1700:1700/udp"   # Semtech UDP packet forwarder
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    environment:
+      INTEGRATION__MQTT__EVENT_TOPIC_TEMPLATE: "eu868/gateway/{{ .GatewayID }}/event/{{ .EventType }}"
+      INTEGRATION__MQTT__STATE_TOPIC_TEMPLATE: "eu868/gateway/{{ .GatewayID }}/state/{{ .StateType }}"
+      INTEGRATION__MQTT__COMMAND_TOPIC_TEMPLATE: "eu868/gateway/{{ .GatewayID }}/command/{{ .CommandType }}"
+      INTEGRATION__MQTT__AUTH__TYPE: "generic"
+      INTEGRATION__MQTT__AUTH__GENERIC__SERVERS: "tcp://mosquitto:1883"
+
+  # ─── ChirpStack Network Server ────────────────────────────────────────
+  chirpstack:
+    image: chirpstack/chirpstack:4
+    restart: unless-stopped
+    command: -c /etc/chirpstack
+    ports:
+      - "8080:8080"   # REST / gRPC-web API
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    volumes:
+      - ./docker/chirpstack:/etc/chirpstack:ro
+    environment:
+      MQTT_BROKER_HOST: mosquitto
+      POSTGRESQL_HOST: postgres
+      REDIS_HOST: redis
+
+  # ─── ChirpStack REST API (optional – handy for HTTP clients) ──────────
+  chirpstack-rest-api:
+    image: chirpstack/chirpstack-rest-api:4
+    restart: unless-stopped
+    command: --server chirpstack:8080 --bind 0.0.0.0:8090 --insecure
+    ports:
+      - "8090:8090"
+    depends_on:
+      - chirpstack
+
+  # ─── AgriSense Middleware (FastAPI) ────────────────────────────────────
+  middleware:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chirpstack:
+        condition: service_started
+      influxdb:
+        condition: service_healthy
+    env_file:
+      - .env.docker
+    volumes:
+      - ./app:/app/app:ro   # mount source for reload during dev
+
+  # ─── InfluxDB 2.x (time-series telemetry + digital twin) ─────────────
+  influxdb:
+    image: influxdb:2.7
+    container_name: agrisense_influxdb
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "8086:8086"
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE:        setup
+      DOCKER_INFLUXDB_INIT_USERNAME:    agrisense_admin
+      DOCKER_INFLUXDB_INIT_PASSWORD:    ${INFLUXDB_TOKEN:-MOV7LwlERsiOf1TqYRJcxfpxzMleIIe0jdLw53ofifr4CGCVMvDtCdyIO09ZAO0uvnl3CMTGM8p_HQMxV-1d7g==}
+      DOCKER_INFLUXDB_INIT_ORG:         ${INFLUXDB_ORG:-agrisense}
+      DOCKER_INFLUXDB_INIT_BUCKET:      ${INFLUXDB_BUCKET_RAW:-telemetry-raw}
+      DOCKER_INFLUXDB_INIT_RETENTION:   365d
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN:-MOV7LwlERsiOf1TqYRJcxfpxzMleIIe0jdLw53ofifr4CGCVMvDtCdyIO09ZAO0uvnl3CMTGM8p_HQMxV-1d7g==}
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+      - influxdb_config:/etc/influxdb2
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ─── Grafana (dashboards for telemetry + digital twin) ────────────────
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: agrisense_grafana
+    restart: unless-stopped
+    env_file:
+      - .env.docker
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER:     ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-agrisense}
+      GF_INSTALL_PLUGINS:         grafana-influxdb-flux-datasource
+      INFLUXDB_TOKEN:             ${INFLUXDB_TOKEN:-MOV7LwlERsiOf1TqYRJcxfpxzMleIIe0jdLw53ofifr4CGCVMvDtCdyIO09ZAO0uvnl3CMTGM8p_HQMxV-1d7g==}
+      INFLUXDB_ORG:               ${INFLUXDB_ORG:-agrisense}
+      INFLUXDB_BUCKET_RAW:        ${INFLUXDB_BUCKET_RAW:-telemetry-raw}
+      INFLUXDB_BUCKET_DIGITAL_TWIN: ${INFLUXDB_BUCKET_DIGITAL_TWIN:-digital_twin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      influxdb:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:
+  mosquitto_data:
+  mosquitto_log:
+  influxdb_data:
+  influxdb_config:
+  grafana_data:

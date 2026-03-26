@@ -26,7 +26,7 @@ async def create_asset_performance(session: AsyncSession, data: asset_schema.Ass
         operating_hours=data.operating_hours,
         error_count=data.error_count,
         last_maintenance=data.last_maintenance,
-        metadata=data.metadata
+        extra_metadata=data.metadata
     )
     session.add(record)
     await session.commit()

@@ -73,7 +73,7 @@ class ProduceBatch(Base):
     origin_country = Column(String(2), nullable=False, default="KE")
     certifications = Column(ARRAY(String), nullable=True)
     notes = Column(Text, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

@@ -30,7 +30,7 @@ async def create_certification(
         expiry_date=data.expiry_date,
         scope=data.scope,
         document_url=data.document_url,
-        metadata=data.metadata,
+        extra_metadata=data.metadata,
         status="active" if data.expiry_date >= date.today() else "expired"
     )
     session.add(cert)

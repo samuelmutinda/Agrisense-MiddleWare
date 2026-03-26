@@ -4,6 +4,7 @@ ChirpStack event ingestion service.
 This service handles incoming ChirpStack webhook events. It:
 - Normalizes ChirpStack payloads
 - Resolves tenant and device identifiers from the database
+- Persists telemetry data to InfluxDB
 - Emits filtered events to WebSocket subscribers
 
 This service does NOT:
@@ -14,13 +15,18 @@ This service does NOT:
 
 from __future__ import annotations
 
+import logging
 from typing import Optional
+from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import models
 from app.ws.manager import manager
+from app.services import influxdb_service
+
+logger = logging.getLogger(__name__)
 
 
 async def resolve_tenant_by_name(
@@ -49,6 +55,38 @@ async def resolve_device_by_external_id(
     result = await session.execute(stmt)
     device = result.scalar_one_or_none()
     return str(device.id) if device else None
+
+
+async def resolve_asset_for_device(
+    session: AsyncSession, device_id: str
+) -> Optional[str]:
+    """
+    Resolve which asset (cold storage unit or reefer truck) a device is assigned to.
+    
+    Returns the asset UUID if the device is assigned to an asset, None otherwise.
+    """
+    if not device_id:
+        return None
+    
+    # Check ColdStorageUnit (has sensor_device_id field)
+    stmt = select(models.ColdStorageUnit).where(
+        models.ColdStorageUnit.sensor_device_id == device_id
+    )
+    result = await session.execute(stmt)
+    unit = result.scalar_one_or_none()
+    if unit:
+        return str(unit.id)
+    
+    # Check ReeferTruck (has sensor_device_id field)
+    stmt = select(models.ReeferTruck).where(
+        models.ReeferTruck.sensor_device_id == device_id
+    )
+    result = await session.execute(stmt)
+    truck = result.scalar_one_or_none()
+    if truck:
+        return str(truck.id)
+    
+    return None
 
 
 async def process_uplink_event(
@@ -102,6 +140,67 @@ async def process_uplink_event(
         "tx_info": raw_payload.get("txInfo"),
         "region": raw_payload.get("regionConfigId"),
     }
+
+    # =========================================================================
+    # PERSIST TELEMETRY TO INFLUXDB
+    # =========================================================================
+    decoded_object = raw_payload.get("object", {})
+    if decoded_object and device_id:
+        # Extract telemetry from decoded payload
+        temperature = decoded_object.get("temperature")
+        humidity = decoded_object.get("humidity")
+        door_open = decoded_object.get("doorOpen") or decoded_object.get("door_open")
+        battery = decoded_object.get("batteryLevel") or decoded_object.get("battery")
+        
+        # Get asset_id from device assignment (if available)
+        asset_id = await resolve_asset_for_device(session, device_id)
+        
+        # Determine asset type
+        asset_type = "cold_storage_unit"  # Default
+        if asset_id:
+            # Check if it's a reefer truck
+            stmt = select(models.ReeferTruck).where(models.ReeferTruck.id == asset_id)
+            result = await session.execute(stmt)
+            if result.scalar_one_or_none():
+                asset_type = "reefer_truck"
+        
+        # Parse timestamp
+        timestamp = None
+        time_str = raw_payload.get("time")
+        if time_str:
+            try:
+                timestamp = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+            except (ValueError, TypeError):
+                timestamp = None
+        
+        # Get signal strength from rxInfo
+        signal_strength = None
+        rx_info_list = raw_payload.get("rxInfo", [])
+        if rx_info_list and len(rx_info_list) > 0:
+            signal_strength = rx_info_list[0].get("rssi")
+        
+        # Write to InfluxDB
+        if temperature is not None or humidity is not None or door_open is not None:
+            await influxdb_service.write_telemetry_point(
+                device_id=dev_eui or device_id,
+                asset_id=asset_id or device_id,
+                asset_type=asset_type,
+                temperature=temperature,
+                humidity=humidity,
+                door_open=door_open,
+                battery_level=battery,
+                signal_strength=signal_strength,
+                timestamp=timestamp,
+                tenant_id=tenant_id,
+                extra_fields={
+                    "f_cnt": raw_payload.get("fCnt"),
+                    "f_port": raw_payload.get("fPort"),
+                }
+            )
+            logger.info(
+                f"Persisted telemetry for device {dev_eui}: "
+                f"temp={temperature}°C, humidity={humidity}%, door_open={door_open}"
+            )
 
     # Emit to WebSocket subscribers (filtered by tenant and device)
     # NOTE: manager.broadcast() automatically filters by tenant_id - only connections

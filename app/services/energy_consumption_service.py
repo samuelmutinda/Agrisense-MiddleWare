@@ -28,7 +28,7 @@ async def create_energy_consumption(session: AsyncSession, data: energy_schema.E
         cost_per_kwh=data.cost_per_kwh,
         total_cost=data.total_cost,
         carbon_footprint_kg=data.carbon_footprint_kg,
-        metadata=data.metadata
+        extra_metadata=data.metadata
     )
     session.add(record)
     await session.commit()

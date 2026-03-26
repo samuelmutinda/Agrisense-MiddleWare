@@ -25,7 +25,7 @@ async def create_kpi_metric(session: AsyncSession, data: kpi_schema.KpiMetricCre
         period_start=data.period_start,
         period_end=data.period_end,
         facility_id=data.facility_id,
-        metadata=data.metadata
+        extra_metadata=data.metadata
     )
     session.add(metric)
     await session.commit()

@@ -26,7 +26,7 @@ class GcpProfile(Base):
     next_audit_date = Column(DateTime(timezone=True), nullable=True)
     auditor_name = Column(String(100), nullable=True)
     recommendations = Column(ARRAY(String), nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), nullable=True, onupdate=lambda: datetime.now(timezone.utc))
     

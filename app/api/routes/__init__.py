@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     admin,
+    admin_aggregates,
     arrivals,
     auth,
     chirpstack,
@@ -33,6 +34,13 @@ from app.api.routes import (
     maintenance_records,
     staff_operations,
     audit_trail,
+    notifications,
+    # RSL and prediction services
+    predictions,
+    # Telemetry ingestion and query (Roadmap §3.2)
+    telemetry,
+    # Digital twin analytics (InfluxDB digital_twin bucket)
+    digital_twin,
 )
 
 
@@ -40,6 +48,7 @@ def get_api_router() -> APIRouter:
     router = APIRouter()
     router.include_router(auth.router)
     router.include_router(admin.router)
+    router.include_router(admin_aggregates.router)
     router.include_router(arrivals.router)
     router.include_router(cold_storage_units.router)
     router.include_router(customers.router)
@@ -70,5 +79,12 @@ def get_api_router() -> APIRouter:
     router.include_router(maintenance_records.router)
     router.include_router(staff_operations.router)
     router.include_router(audit_trail.router)
+    router.include_router(notifications.router)
+    # RSL and prediction services
+    router.include_router(predictions.router)
+    # Telemetry ingestion and query (Roadmap §3.2)
+    router.include_router(telemetry.router)
+    # Digital twin analytics (InfluxDB digital_twin bucket)
+    router.include_router(digital_twin.router)
     return router
 

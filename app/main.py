@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse
 from app.api.routes import get_api_router
 from app.core.bootstrap import run_sysadmin_bootstrap_if_configured
 from app.core.config import get_settings
-from app.services import chirpstack_client
+from app.services import chirpstack_client, influxdb_service
 from app.core.security import decode_token
 from app.db.base import Base
 from app.db.session import engine
@@ -36,6 +36,7 @@ async def lifespan(_app: FastAPI):
 
     yield
 
+    await influxdb_service.close_client()
     await chirpstack_client.close_client()
     await engine.dispose()
 

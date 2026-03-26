@@ -1,0 +1,28 @@
+# Grafana auto-provisioned datasource — InfluxDB Flux
+apiVersion: 1
+
+datasources:
+  - name: InfluxDB - AgriSense
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: agrisense
+      defaultBucket: telemetry-raw
+    secureJsonData:
+      token: ${INFLUXDB_TOKEN}
+    isDefault: true
+    editable: true
+
+  - name: InfluxDB - Digital Twin
+    type: influxdb
+    access: proxy
+    url: http://influxdb:8086
+    jsonData:
+      version: Flux
+      organization: agrisense
+      defaultBucket: digital_twin
+    secureJsonData:
+      token: ${INFLUXDB_TOKEN}
+    editable: true

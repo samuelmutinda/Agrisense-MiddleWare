@@ -47,7 +47,7 @@ async def create_inventory_movement(
         executed_by_user_id=auth.user_id,
         reason=data.reason,
         notes=data.notes,
-        metadata=data.metadata
+        extra_metadata=data.metadata
     )
     session.add(movement)
     await session.commit()

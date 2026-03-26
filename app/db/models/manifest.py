@@ -67,7 +67,7 @@ class Manifest(Base):
     total_items = Column(Integer, nullable=False, default=0)
     special_instructions = Column(Text, nullable=True)
     delivery_notes = Column(Text, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

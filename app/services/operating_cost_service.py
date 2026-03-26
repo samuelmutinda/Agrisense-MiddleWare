@@ -27,7 +27,7 @@ async def create_operating_cost(session: AsyncSession, data: cost_schema.Operati
         vendor_name=data.vendor_name,
         invoice_reference=data.invoice_reference,
         is_recurring=data.is_recurring,
-        metadata=data.metadata
+        extra_metadata=data.metadata
     )
     session.add(record)
     await session.commit()

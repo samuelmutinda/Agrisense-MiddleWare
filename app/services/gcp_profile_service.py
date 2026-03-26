@@ -26,7 +26,7 @@ async def create_gcp_profile(session: AsyncSession, data: gcp_schema.GcpProfileC
         next_audit_date=data.next_audit_date,
         auditor_name=data.auditor_name,
         recommendations=data.recommendations,
-        metadata=data.metadata
+        extra_metadata=data.metadata
     )
     session.add(profile)
     await session.commit()

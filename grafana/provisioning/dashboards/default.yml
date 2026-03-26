@@ -1,0 +1,14 @@
+# Grafana dashboard provisioning — auto-load dashboards from /var/lib/grafana
+apiVersion: 1
+
+providers:
+  - name: AgriSense
+    orgId: 1
+    folder: AgriSense
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+      foldersFromFilesStructure: false

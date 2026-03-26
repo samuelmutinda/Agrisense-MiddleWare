@@ -1,0 +1,42 @@
+# ChirpStack v4 configuration – used by the chirpstack container.
+# See: https://www.chirpstack.io/docs/chirpstack/configuration.html
+
+[logging]
+  level = "info"
+
+[postgresql]
+  dsn = "postgres://agrisense:agrisense@postgres/chirpstack_ns?sslmode=disable"
+  max_open_connections = 10
+  min_idle_connections = 0
+
+[redis]
+  servers = ["redis://redis/"]
+  tls_enabled = false
+  cluster = false
+
+[network]
+  net_id = "000000"
+  enabled_regions = ["eu868"]
+
+[monitoring]
+  bind = ""
+
+[integration]
+  enabled = ["mqtt"]
+
+  [integration.mqtt]
+    server = "tcp://mosquitto:1883/"
+    json = true
+
+[api]
+  bind = "0.0.0.0:8080"
+  secret = "you-must-replace-this-secret-in-production"
+
+[gateway]
+
+  [gateway.backend]
+    [gateway.backend.mqtt]
+      event_topic = "eu868/gateway/+/event/+"
+      state_topic = "eu868/gateway/+/state/+"
+      command_topic_template = "eu868/gateway/{{ .GatewayID }}/command/{{ .CommandType }}"
+      server = "tcp://mosquitto:1883/"

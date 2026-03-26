@@ -46,7 +46,7 @@ async def create_manifest(
         temperature_min_celsius=data.temperature_min_celsius,
         temperature_max_celsius=data.temperature_max_celsius,
         special_instructions=data.special_instructions,
-        metadata=data.metadata,
+        extra_metadata=data.metadata,
         status="draft"
     )
     session.add(manifest)

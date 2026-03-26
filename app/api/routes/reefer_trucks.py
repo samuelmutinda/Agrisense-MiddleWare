@@ -148,3 +148,88 @@ async def delete_reefer_truck(
         )
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+# =============================================================================
+# LIVE TELEMETRY ENDPOINTS
+# =============================================================================
+
+
+@router.get(
+    "/{truck_id}/telemetry",
+    summary="Get truck telemetry"
+)
+async def get_truck_telemetry(
+    truck_id: uuid.UUID,
+    session: AsyncSession = Depends(deps.get_db),
+    auth: AuthContext = Depends(deps.get_auth_context),
+):
+    """
+    Get current telemetry status for a reefer truck.
+    
+    Returns:
+    - Latest sensor readings (temperature, humidity, door state)
+    - 24h metrics (CTH, CDOT, thermal compliance)
+    """
+    try:
+        return await reefer_truck_service.get_truck_telemetry(
+            session=session,
+            truck_id=truck_id,
+            auth=auth
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get(
+    "/{truck_id}/temperature-history",
+    summary="Get truck temperature history"
+)
+async def get_truck_temperature_history(
+    truck_id: uuid.UUID,
+    hours: int = Query(default=24, ge=1, le=720, description="Hours of history to retrieve"),
+    session: AsyncSession = Depends(deps.get_db),
+    auth: AuthContext = Depends(deps.get_auth_context),
+):
+    """
+    Get temperature history for a reefer truck.
+    
+    Returns time-series data from InfluxDB.
+    """
+    try:
+        return await reefer_truck_service.get_truck_temperature_history(
+            session=session,
+            truck_id=truck_id,
+            auth=auth,
+            hours=hours
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get(
+    "/{truck_id}/rsl",
+    summary="Get cargo RSL prediction"
+)
+async def get_truck_rsl(
+    truck_id: uuid.UUID,
+    produce_type: str = Query(default="tomatoes", description="Type of produce"),
+    manifest_id: Optional[str] = Query(default=None, description="Optional manifest ID"),
+    session: AsyncSession = Depends(deps.get_db),
+    auth: AuthContext = Depends(deps.get_auth_context),
+):
+    """
+    Compute Remaining Shelf Life (RSL) for produce in a reefer truck.
+    
+    Uses live temperature from InfluxDB and RSL prediction model.
+    """
+    try:
+        return await reefer_truck_service.get_truck_rsl(
+            session=session,
+            truck_id=truck_id,
+            auth=auth,
+            produce_type=produce_type,
+            manifest_id=manifest_id
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

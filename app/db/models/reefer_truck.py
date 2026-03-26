@@ -54,7 +54,7 @@ class ReeferTruck(Base):
     insurance_expiry = Column(Date, nullable=True)
     total_trips = Column(Integer, nullable=False, default=0)
     total_distance_km = Column(Float, nullable=False, default=0.0)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

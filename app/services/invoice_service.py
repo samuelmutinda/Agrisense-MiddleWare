@@ -43,7 +43,7 @@ async def create_invoice(
         total_amount=total_amount,
         line_items=[item.model_dump() for item in data.line_items],
         notes=data.notes,
-        metadata=data.metadata,
+        extra_metadata=data.metadata,
         status="draft"
     )
     session.add(invoice)

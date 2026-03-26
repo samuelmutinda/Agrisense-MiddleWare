@@ -52,7 +52,7 @@ class Certification(Base):
     scope = Column(Text, nullable=True)
     document_url = Column(String(500), nullable=True)
     renewal_notes = Column(Text, nullable=True)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
     created_at = Column(
         DateTime(timezone=True),
         nullable=False,

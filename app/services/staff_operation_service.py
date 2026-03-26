@@ -28,7 +28,7 @@ async def create_staff_operation(session: AsyncSession, data: staff_schema.Staff
         task_description=data.task_description,
         area_assigned=data.area_assigned,
         supervisor_id=data.supervisor_id,
-        metadata=data.metadata
+        extra_metadata=data.metadata
     )
     session.add(record)
     await session.commit()

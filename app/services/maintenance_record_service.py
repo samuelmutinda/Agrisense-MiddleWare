@@ -28,7 +28,7 @@ async def create_maintenance_record(session: AsyncSession, data: maint_schema.Ma
         estimated_duration_hours=data.estimated_duration_hours,
         estimated_cost=data.estimated_cost,
         parts_required=data.parts_required,
-        metadata=data.metadata
+        extra_metadata=data.metadata
     )
     session.add(record)
     await session.commit()

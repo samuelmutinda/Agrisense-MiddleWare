@@ -50,7 +50,7 @@ async def create_produce_batch(
         gcp_code=data.gcp_code,
         origin_country=data.origin_country,
         certifications=data.certifications,
-        metadata=data.metadata,
+        extra_metadata=data.metadata,
         status="pending" if not data.storage_unit_id else "in_storage"
     )
     session.add(batch)
